@@ -2,13 +2,15 @@
 import requests
 import html5lib
 from bs4 import BeautifulSoup
+import pandas as pd
 
 test = [1,2,3]
 urlList = []
 categories = []
+numberBooks = []
 
-url = "https://books.toscrape.com/"
-response = requests.get(url)
+urlMain = "https://books.toscrape.com/"
+response = requests.get(urlMain)
 soup = BeautifulSoup(response.text, 'html5lib')
 
 navList= soup.find('ul', class_="nav nav-list").find('li').find('ul')
@@ -20,7 +22,21 @@ for link in navList.find_all('li'):
         urlList.append(url)
         text = aTag.get_text().strip()
         categories.append(text)
+        childrenPage = requests.get(urlMain + url)
+        soupChildren = BeautifulSoup(childrenPage.text, 'html5lib')
+        target = soupChildren.find('form', class_='form-horizontal').get_text().strip()
+        targetInt = int(target.split()[0])
+        numberBooks.append(targetInt)
 
-print(urlList)
+data = {
+    'Categories': categories,
+    'Number of Books': numberBooks,
+}
+df = pd.DataFrame(data)
+df['Message'] = ''
+df.loc[df['Number of Books'] < 5, 'Message'] = 'Not enough books'
+print(df)
+
+
     
 
